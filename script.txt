@@ -1,0 +1,163 @@
+
+'''
+Gramática para uma linguagem simples.
+
+'''
+
+'''
+1. Especificação da Gramática Atual
+'''
+'''Primeiro, temos as seguintes regras gramaticais:'''
+
+Start → stmt $
+Stmt → id assign E
+Stmt → if lparen E rparen Stmt else Stmt fi
+Stmt → if lparen E rparen Stmt fi
+Stmt → while lparen E rparen do Stmt od
+Stmt → begin Stmts end
+Stmts → Stmts semi Stmt
+Stmts → Stmt
+E → E plus T
+E → T
+T → id
+T → num
+
+
+
+'''Regras de Declaração e Expressão Lógica:'''
+
+Dccl → int id | float id;
+Assign → id = expr;
+Expr → Expr logic | Expr A;
+Expr logic → ! Expr logic
+Expr logic → Expr logic AND Expr logic
+Expr logic → Expr logic OR Expr logic
+Expr logic → (Expr logic)
+Expr logic → Expr A OR Expr A
+
+
+
+'''2. Identificação de Recursão à Esquerda'''
+
+'''A recursão à esquerda ocorre quando uma produção de uma gramática tem uma regra onde o lado direito começa com o próprio não terminal do lado esquerdo. Neste caso, identificamos as seguintes regras com recursão à esquerda:'''
+
+E → E plus T
+Expr → Expr logic | Expr A
+Expr logic → Expr logic AND Expr logic
+Expr logic → Expr logic OR Expr logic
+
+
+'''3. Eliminação da Recursão à Esquerda'''
+
+Para E → E plus T | T
+
+'''Identificamos a recursão à esquerda: E → E plus T'''
+'''Criamos uma nova regra substituta E':'''
+
+E → T E'
+E' → plus T E' | ε
+Para Expr → Expr logic | Expr A
+
+'''Identificamos a recursão à esquerda: Expr → Expr logic
+Criamos uma nova regra substituta Expr':'''
+
+Expr → Expr A Expr'
+Expr' → logic Expr' | ε
+
+Para Expr logic → Expr logic AND Expr logic | Expr logic OR Expr logic | ! Expr logic | (Expr logic)
+
+Identificamos a recursão à esquerda: Expr logic → Expr logic AND Expr logic e Expr logic → Expr logic OR Expr logic
+
+Criamos uma nova regra substituta Expr logic':
+Expr logic → ! Expr logic | (Expr logic) Expr logic'
+Expr logic' → AND Expr logic Expr logic' | OR Expr logic Expr logic' | ε
+
+'''Gramática Ajustada Sem Recursão à Esquerda'''
+
+Regras Ajustadas:
+Start → Stmt $
+Stmt → id assign E | if lparen E rparen Stmt else Stmt fi | if lparen E rparen Stmt fi | while lparen E rparen do Stmt od | begin Stmts end
+Stmts → Stmts semi Stmt | Stmt
+E → T E'
+E' → plus T E' | ε
+T → id | num
+Expr → Expr A Expr'
+Expr' → logic Expr' | ε
+Expr logic → ! Expr logic | (Expr logic) Expr logic'
+Expr logic' → AND Expr logic Expr logic' | OR Expr logic Expr logic' | ε
+Dccl → int id | float id;
+Assign → id = expr;
+
+
+**********************************************************************************************************
+Para resolver o problema, siga estes passos:
+Definição do Token LOGIC:
+
+Certifique-se de que o token 'LOGIC' está definido corretamente no seu analisador léxico. Se não, você deve adicioná-lo.
+Caso 'LOGIC' seja uma regra gramatical, deve ser implementada como uma regra no arquivo grammar.py.
+Verificação das Regras Definidas:
+
+Verifique se as regras definidas (dccl, assign, expr, expr_A, expr_prime, expr_logic, expr_logic_prime) estão sendo usadas corretamente e se são necessárias na gramática.
+Se elas não forem necessárias, considere removê-las. Se forem, certifique-se de que há produções que as utilizam.
+Atualização do Arquivo grammar.py:
+
+Adicione a definição para o token 'LOGIC' ou qualquer outra regra que esteja faltando.
+Garanta que todas as regras gramaticais necessárias estejam corretamente definidas e utilizáveis.
+Exemplo de Atualização do Arquivo grammar.py:
+Supondo que 'LOGIC' seja um token que representa operadores lógicos, você pode defini-lo da seguinte forma:
+
+
+
+
+
+
+
+
+
+import ply.lex as lex
+import ply.yacc as yacc
+
+# Definição dos tokens
+tokens = (
+    'LOGIC',
+    # outros tokens...
+)
+
+# Expressão regular para o token LOGIC
+t_LOGIC = r'and|or|not'
+
+# Definição das regras da gramática
+def p_expr_logic(p):
+    '''expr_logic : expr LOGIC expr'''
+    p[0] = ('logic', p[1], p[2], p[3])
+
+# Outras regras...
+
+# Construção do parser
+parser = yacc.yacc()
+
+if __name__ == '__main__':
+    G = Grammar()
+    G.grammar('S')
+    G.add_nonterminal('A')
+    G.add_nonterminal('B')
+    G.add_terminal('a')
+    G.add_terminal('b')
+    G.add_terminal('c')
+    G.add_production('S', ['A', 'B', 'c'])
+    G.add_production('A', ['a'])
+    G.add_production('A', ['c'])
+    G.add_production('A', [])
+    G.add_production('B', 'b')
+    G.add_production('B', 'c')
+    G.add_production('B', [])
+    # Seu código para manipular a gramática...
+
+
+Isso deve corrigir o problema, eliminando o erro relacionado ao token não definido e os avisos sobre regras não utilizadas. Se ainda houver avisos sobre regras não utilizadas, verifique se todas as regras definidas são realmente necessárias para a análise da gramática.
+
+
+
+
+
+

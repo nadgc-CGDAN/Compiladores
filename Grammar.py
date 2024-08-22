@@ -1,63 +1,79 @@
-import ply.lex as lex
+'''Este arquivo define a gramática e as regras de produção:'''
+
+
 import ply.yacc as yacc
+from lexer import tokens
 
-# Definição dos tokens
-tokens = (
-    'ID', 'NUM',
-    'ASSIGN', 'PLUS',
-    'LPAREN', 'RPAREN',
-    'IF', 'ELSE', 'FI',
-    'WHILE', 'DO', 'OD',
-    'BEGIN', 'END',
-    'SEMI',
-    'INT', 'FLOAT',
-    'AND', 'OR', 'NOT'
-)
+class Grammar:
 
-# Palavras reservadas
-reserved = {
-    'if': 'IF',
-    'else': 'ELSE',
-    'fi': 'FI',
-    'while': 'WHILE',
-    'do': 'DO',
-    'od': 'OD',
-    'begin': 'BEGIN',
-    'end': 'END',
-    'int': 'INT',
-    'float': 'FLOAT',
-    'and': 'AND',
-    'or': 'OR',
-    'not': 'NOT',
-}
+    def __init__(self) -> None:
+        self.__terminals = {}
+        self.__nonterminals = {}
+        self.__productions = {}
+        self.__id = 0
 
-# Definição dos tokens
-t_ASSIGN = r'='
-t_PLUS = r'\+'
-t_LPAREN = r'\('
-t_RPAREN = r'\)'
-t_SEMI = r';'
+    def add_terminal(self, x: str) -> int:
+        if x in self.__nonterminals:
+            raise ValueError()
+        self.__terminals[x] = self.__id
+        self.__id = self.__id+1
+        return self.__terminals[x]
 
-def t_ID(t):
-    r'[a-zA-Z_][a-zA-Z_0-9]*'
-    t.type = reserved.get(t.value, 'ID')
-    return t
+    def add_nonterminal(self, X: str):
+        if X in self.__terminals:
+            raise ValueError()
+        self.__nonterminals[X] = self.__id
+        self.__id = self.__id + 1
+        return self.__nonterminals[X]
 
-def t_NUM(t):
-    r'\d+'
-    t.value = int(t.value)
-    return t
+    def grammar(self, S: str) -> None:
+        self.add_nonterminal(S)
 
-# Ignorar espaços em branco
-t_ignore = ' \t'
+    def add_production(self, A: str, rhs: list) -> int:
+        self.__productions[self.__id] = {'lhs': '', 'rhs': []}
+        self.__productions[self.__id]['lhs'] = A
+        self.__productions[self.__id]['rhs'] = rhs
+        self.__id = self.__id+1
+        return self.__id - 1
 
-# Tratamento de erros
-def t_error(t):
-    print(f"Illegal character '{t.value[0]}'")
-    t.lexer.skip(1)
+    def terminals(self) -> iter:
+        return iter(self.__terminals)
 
-# Construção do lexer
-lexer = lex.lex()
+    def nonterminals(self) -> iter:
+        return iter(self.__nonterminals)
+
+    def productions(self) -> iter:
+        return iter(self.__productions)
+
+    def is_terminal(self, X: str) -> bool:
+        return X in self.__terminals
+
+    def rhs(self, p: int) -> list:
+        return self.__productions[p]['rhs']
+
+    def lhs(self, p: int) -> str:
+        return self.__productions[p]['lhs']
+
+    def productions_for(self, A: str) -> list:
+        l = []
+        for k, v in self.__productions.items():
+            if v['lhs'] == A:
+                l.append(k)
+        return l
+
+    def occurrences(self, X: str) -> list:
+        l = []
+        for k, v in self.__productions.items():
+            for i, rhs in enumerate(v['rhs']):
+                if rhs == X:
+                    l.append((k, i))
+        return l
+
+    def production(self, O: tuple[int, int]) -> int:
+        return O[0]
+
+    def tail(self, p: int, i: int) -> list:
+        return self.__productions[p]['rhs'][i+1:]
 
 # Definição das regras de gramática ajustadas
 def p_start(p):
@@ -123,14 +139,3 @@ def p_error(p):
 
 # Construção do parser
 parser = yacc.yacc()
-
-# Exemplo de uso
-data = '''
-int x;
-x = 3 + 5;
-if (x > 0) x = x + 1 fi;
-'''
-
-# Parseando a entrada
-result = parser.parse(data, lexer=lexer)
-print(result)
