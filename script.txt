@@ -158,7 +158,7 @@ Isso deve corrigir o problema, eliminando o erro relacionado ao token não defin
 
 
 
-
+**************************************************************************************************************
 Regras da Gramática:
 
 Regra 0:  𝑆 ′  → início
@@ -226,8 +226,325 @@ expr → 27
 expr_A → 14
 expr_lógica → 18 19 21 22
 expr_lógica_prime → 19 20 21 22
-expr_prime → 14 15   // Modificação de uma regra anterior
+expr_prime → 14 15   //  dModificaçãoe uma regra anterior
 início → 0
 sentença → 1 3 3 4 5 7 8
 sentenças → 6 7
+
+
+
+
+********************** Lexer.py**********************************************
+
+import ply.lex as lex
+
+# Definição dos tokens
+tokens = (
+    'ID', 'NUM',
+    'ASSIGN', 'PLUS',
+    'LPAREN', 'RPAREN',
+    'IF', 'ELSE', 'FI',
+    'WHILE', 'DO', 'OD',
+    'BEGIN', 'END',
+    'SEMI',
+    'INT', 'FLOAT',
+    'AND', 'OR', 'NOT'
+)
+
+# Palavras reservadas
+reserved = {
+    'if': 'IF',
+    'else': 'ELSE',
+    'fi': 'FI',
+    'while': 'WHILE',
+    'do': 'DO',
+    'od': 'OD',
+    'begin': 'BEGIN',
+    'end': 'END',
+    'int': 'INT',
+    'float': 'FLOAT',
+    'and': 'AND',
+    'or': 'OR',
+    'not': 'NOT',
+}
+
+# Definição dos tokens
+t_ASSIGN = r'='
+t_PLUS = r'\+'
+t_LPAREN = r'\('
+t_RPAREN = r'\)'
+t_SEMI = r';'
+
+def t_ID(t):
+    r'[a-zA-Z_][a-zA-Z_0-9]*'
+    t.type = reserved.get(t.value, 'ID')
+    return t
+
+def t_NUM(t):
+    r'\d+'
+    t.value = int(t.value)
+    return t
+
+# Ignorar espaços em branco
+t_ignore = ' \t'
+
+# Tratamento de erros
+def t_error(t):
+    print(f"Illegal character '{t.value[0]}'")
+    t.lexer.skip(1)
+
+# Construção do lexer
+lexer = lex.lex()
+
+
+
+**********************************Grammar.py*************************************************
+
+'''Este arquivo define a gramática e as regras de produção:'''
+
+
+import ply.yacc as yacc
+from lexer import tokens
+
+class Grammar:
+
+    def __init__(self) -> None:
+        self.__terminals = {}
+        self.__nonterminals = {}
+        self.__productions = {}
+        self.__id = 0
+
+    def add_terminal(self, x: str) -> int:
+        if x in self.__nonterminals:
+            raise ValueError()
+        self.__terminals[x] = self.__id
+        self.__id = self.__id+1
+        return self.__terminals[x]
+
+    def add_nonterminal(self, X: str):
+        if X in self.__terminals:
+            raise ValueError()
+        self.__nonterminals[X] = self.__id
+        self.__id = self.__id + 1
+        return self.__nonterminals[X]
+
+    def grammar(self, S: str) -> None:
+        self.add_nonterminal(S)
+
+    def add_production(self, A: str, rhs: list) -> int:
+        self.__productions[self.__id] = {'lhs': '', 'rhs': []}
+        self.__productions[self.__id]['lhs'] = A
+        self.__productions[self.__id]['rhs'] = rhs
+        self.__id = self.__id+1
+        return self.__id - 1
+
+    def terminals(self) -> iter:
+        return iter(self.__terminals)
+
+    def nonterminals(self) -> iter:
+        return iter(self.__nonterminals)
+
+    def productions(self) -> iter:
+        return iter(self.__productions)
+
+    def is_terminal(self, X: str) -> bool:
+        return X in self.__terminals
+
+    def rhs(self, p: int) -> list:
+        return self.__productions[p]['rhs']
+
+    def lhs(self, p: int) -> str:
+        return self.__productions[p]['lhs']
+
+    def productions_for(self, A: str) -> list:
+        l = []
+        for k, v in self.__productions.items():
+            if v['lhs'] == A:
+                l.append(k)
+        return l
+
+    def occurrences(self, X: str) -> list:
+        l = []
+        for k, v in self.__productions.items():
+            for i, rhs in enumerate(v['rhs']):
+                if rhs == X:
+                    l.append((k, i))
+        return l
+
+    def production(self, O: tuple[int, int]) -> int:
+        return O[0]
+
+    def tail(self, p: int, i: int) -> list:
+        return self.__productions[p]['rhs'][i+1:]
+
+# Definição das regras de gramática ajustadas
+def p_start(p):
+    '''start : stmt'''
+
+def p_stmt(p):
+    '''stmt : ID ASSIGN E
+            | IF LPAREN E RPAREN stmt ELSE stmt FI
+            | IF LPAREN E RPAREN stmt FI
+            | WHILE LPAREN E RPAREN DO stmt OD
+            | BEGIN stmts END'''
+
+def p_stmts(p):
+    '''stmts : stmts SEMI stmt
+             | stmt'''
+
+def p_E(p):
+    '''E : T E_prime'''
+
+def p_E_prime(p):
+    '''E_prime : PLUS T E_prime
+               | empty'''
+
+def p_T(p):
+    '''T : ID
+         | NUM'''
+
+def p_expr(p):
+    '''expr : expr_A expr_prime'''
+
+def p_expr_prime(p):
+    '''expr_prime : LOGIC expr_prime
+                  | empty'''
+
+def p_expr_A(p):
+    '''expr_A : T'''
+
+def p_expr_logic(p):
+    '''expr_logic : NOT expr_logic
+                  | LPAREN expr_logic RPAREN expr_logic_prime
+                  | T expr_logic_prime'''
+
+def p_expr_logic_prime(p):
+    '''expr_logic_prime : AND expr_logic expr_logic_prime
+                        | OR expr_logic expr_logic_prime
+                        | empty'''
+
+def p_empty(p):
+    '''empty :'''
+    pass
+
+# Regras de declaração e atribuição (ajustadas para uso)
+def p_dccl(p):
+    '''dccl : INT ID
+            | FLOAT ID'''
+
+def p_assign(p):
+    '''assign : ID ASSIGN expr'''
+
+# Tratamento de erros de sintaxe
+def p_error(p):
+    print("Syntax error in input!")
+
+# Construção do parser
+parser = yacc.yacc()
+
+
+*************************************main.py******************************************
+
+from grammar import Grammar
+
+def main():
+    # Criação da gramática
+    G = Grammar()
+    
+    # Definição do símbolo inicial da gramática
+    G.grammar('S')
+    
+    # Adicionando não terminais
+    G.add_nonterminal('A')
+    G.add_nonterminal('B')
+    
+    # Adicionando terminais
+    G.add_terminal('a')
+    G.add_terminal('b')
+    G.add_terminal('c')
+    
+    # Adicionando produções
+    G.add_production('S', ['A', 'B', 'c'])
+    G.add_production('A', ['a'])
+    G.add_production('A', ['c'])
+    G.add_production('A', [])
+    G.add_production('B', ['b'])
+    G.add_production('B', ['c'])
+    G.add_production('B', [])
+    
+    # Exibição das produções adicionadas
+    print("Produções:")
+    for p_id in G.productions():
+        lhs = G.lhs(p_id)
+        rhs = G.rhs(p_id)
+        print(f"{lhs} -> {' '.join(rhs) if rhs else 'ε'}")
+
+if __name__ == '__main__':
+    main()
+
+
+
+
+***********************************************************************************************************
+
+Funcionamento da Gramática
+Definição da Gramática:
+
+Classe Gramática: Gerencia terminais (tokens), não-terminais (símbolos) e produções (regras de gramática).
+Métodos Principais:
+adicionar_terminal(x): Adiciona um terminal à gramática.
+adicionar_nao_terminal(X): Adiciona um não-terminal à gramática.
+adicionar_produção(A, rhs): Adiciona uma produção, onde A é o lado esquerdo e rhs é a lista de símbolos do lado
+direito.
+Definição das Regras de Produção:
+
+Regras de Sintaxe (p_): Definem como os tokens e não-terminais se combinam para formar frases válidas. Por exemplo,
+stmt pode ser uma atribuição, um comando if, ou um loop while.
+Analisador (Parser):
+
+Utiliza o ply.yacc para construir um parser que verifica se uma sequência de tokens corresponde às regras definidas na
+gramática.
+Lexer:
+
+Utiliza o ply.lex para definir e reconhecer tokens e regras lexicais, como identificadores (ID), números (NUM),
+e palavras-chave (SE, INICIO, etc.).
+Expansão e Construção
+Para expandir a gramática e continuar a construção do compilador ou analisador sintático, você pode:
+
+Adicionar Novos Tokens e Regras:
+
+Definir novos tokens no lexer e criar regras correspondentes no parser para lidar com esses tokens.
+Implementar Funções de Ação:
+
+Adicionar funções que executam ações quando certas produções são reconhecidas. Isso pode envolver a construção de uma 
+árvore de sintaxe ou a execução de código.
+Adicionar Novos Não-Terminais e Produções:
+
+Incluir mais não-terminais e suas produções para suportar novas construções da linguagem ou aumentar a expressividade
+da gramática.
+Tratamento de Erros:
+
+Melhorar a detecção e recuperação de erros sintáticos para fornecer mensagens de erro mais úteis e precisas.
+Resumo
+Esta gramática é a base para criar um analisador que verifica a sintaxe de um código de acordo com regras específicas.
+Para evoluir, adicione mais tokens, produções e funcionalidades conforme necessário para suportar a linguagem desejada
+e construir um compilador completo.
+
+
+*************************************Especificação da gramática**********************************************
+
+Primeiro passo será criar as especificações da linguagem(a gramática), podemos usar apenas int e float,
+depois extruturas condicionais if else, extrutura de repetição, escolher como finalizar essas extruturas, se com
+chaves ou end if ou end while.
+Sobre as operações básicas +, -, *, e divisão, cuidado com a ordem de precedência.
+Esotruturas lógicas definir se pode misturar ou não.
+OBS: Lembrando que o nossa gramática tá adaptada, ou seja um pouco misturada.
+Garantir que seja LL1.
+Seguindo essas orientações, ficará mais fácil e a  geração de código.
+********************************************************************************************************************
+
+
+
+
+
 

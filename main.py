@@ -1,36 +1,20 @@
 from grammar import Grammar
 
 def main():
-    # Criação da gramática
-    G = Grammar()
-    
-    # Definição do símbolo inicial da gramática
-    G.grammar('S')
-    
-    # Adicionando não terminais
-    G.add_nonterminal('A')
-    G.add_nonterminal('B')
-    
-    # Adicionando terminais
-    G.add_terminal('a')
-    G.add_terminal('b')
-    G.add_terminal('c')
-    
-    # Adicionando produções
-    G.add_production('S', ['A', 'B', 'c'])
-    G.add_production('A', ['a'])
-    G.add_production('A', ['c'])
-    G.add_production('A', [])
-    G.add_production('B', ['b'])
-    G.add_production('B', ['c'])
-    G.add_production('B', [])
-    
-    # Exibição das produções adicionadas
-    print("Produções:")
-    for p_id in G.productions():
-        lhs = G.lhs(p_id)
-        rhs = G.rhs(p_id)
-        print(f"{lhs} -> {' '.join(rhs) if rhs else 'ε'}")
+    test_strings = [
+        "x = 5",
+        "if (x + 1) y = 10 else z = 15 fi",
+        "while (x + 1) do y = 20 od",
+        "begin x = 5; y = 10 end"
+    ]
+
+    for s in test_strings:
+        print(f"Testando a string: '{s}'")
+        lexer.input(s)
+        for token in lexer:
+            print(token)
+        parser.parse(s)
+        print("Análise concluída.\n")
 
 if __name__ == '__main__':
-    main()
+    principal()
