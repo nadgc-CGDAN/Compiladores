@@ -1,20 +1,22 @@
 from grammar import Grammar
+from ll1_checker import LL1GrammarChecker
 
 def main():
-    test_strings = [
-        "x = 5",
-        "if (x + 1) y = 10 else z = 15 fi",
-        "while (x + 1) do y = 20 od",
-        "begin x = 5; y = 10 end"
-    ]
+    # Criação de uma gramática de exemplo
+    g = Grammar()
+    g.grammar("S")
+    g.add_terminal("a")
+    g.add_terminal("b")
+    g.add_nonterminal("A")
+    g.add_production("S", ["a", "A"])
+    g.add_production("A", ["b"])
 
-    for s in test_strings:
-        print(f"Testando a string: '{s}'")
-        lexer.input(s)
-        for token in lexer:
-            print(token)
-        parser.parse(s)
-        print("Análise concluída.\n")
+    # Verificação se a gramática é LL(1)
+    checker = LL1GrammarChecker(g)
+    if checker.is_ll1():
+        print("A gramática é LL(1).")
+    else:
+        print("A gramática NÃO é LL(1).")
 
-if __name__ == '__main__':
-    principal()
+if __name__ == "__main__":
+    main()
