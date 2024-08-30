@@ -1,0 +1,58 @@
+<programa> -> <declaracoes> <comandos> $
+
+# Declarações
+
+<declaracoes> -> <declaracao> <declaracoes>
+<declaracoes -> 
+<declaracao> -> <tipo> <nome_variavel>
+
+<tipo> -> int
+<tipo> -> float
+
+# Comandos
+
+<comandos> -> <comando> <comandos>
+<comandos> ->
+<comando> -> <atribuicao>
+<comando> -> <if>
+<comando> -> <loop>
+
+# Atribuição
+
+<atribuicao> -> <nome_variavel> = <expr>
+
+# Condicional
+
+<if> -> if <expr> <comandos> <else> endif
+<else> -> else comandos 
+<else> ->
+
+# Loop
+
+<loop> -> while <expr> <comandos> <endwhile>
+
+# Expressões
+
+<expr> -> not <expr>
+<expr> -> <simple_expr> AND <expr>
+<expr> -> <simple_expr> OR <expr>
+<simpleExpr> -> <math>
+<simpleExpr> -> <math> <op_relacional> <math>
+
+# Expressões matemáticas
+<math>
+E  -> T E'
+E' -> + T E' | -TE' |epsilon
+T  -> F T'
+T' -> * F T' | /FT' |epsilon
+F  -> (E) | int
+
+# Operadores relacionais
+
+<op_relacional> -> igual 
+<op_relacional> -> diferente
+<op_relacional> -> maior
+<op_relacional> -> menor
+<op_relacional> -> maior_igual
+<op_relacional> -> menor_igual 
+
