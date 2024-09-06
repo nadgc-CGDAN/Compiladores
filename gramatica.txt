@@ -56,3 +56,19 @@ F  -> (E) | int
 <op_relacional> -> maior_igual
 <op_relacional> -> menor_igual 
 
+
+
+
+
+Gramática com eliminação do prefixo comum
+
+
+# Operadores relacionais (com fatoração à esquerda)
+
+<op_relacional> -> igual | diferente | <prefix_maior_menor>
+
+<prefix_maior_menor> -> maior <sufixo_relacional> | menor <sufixo_relacional>
+
+<sufixo_relacional> -> igual | ε
+
+
