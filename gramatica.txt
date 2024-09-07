@@ -72,3 +72,78 @@ Gramática com eliminação do prefixo comum
 <sufixo_relacional> -> igual | ε
 
 
+
+
+
+
+DESCENDANT Reccursive
+
+class RecursiveDescentParser:
+    def __init__(self, tokens):
+        self.tokens = tokens
+        self.current_token = None
+        self.pos = -1
+        self.advance()
+
+    def advance(self):
+        """Avança para o próximo token."""
+        self.pos += 1
+        if self.pos < len(self.tokens):
+            self.current_token = self.tokens[self.pos]
+        else:
+            self.current_token = {'type': 'EOF', 'value': ''}  # Token especial de fim de arquivo
+        print(f"Token atual: {self.current_token}")
+
+    def match(self, token_type):
+        """Verifica se o token atual é do tipo esperado e avança."""
+        if self.current_token['type'] == token_type:
+            print(f"Token correspondente encontrado: {token_type}")
+            self.advance()
+        else:
+            raise Exception(f"Erro de sintaxe: esperado {token_type}, encontrado {self.current_token['type']}")
+
+    def parse(self):
+        """Inicia o processo de análise sintática."""
+        print("Iniciando a análise sintática...")
+        self.program()
+        print("Análise sintática concluída.")
+
+    def program(self):
+        """Regra: program -> declaracoes"""
+        print("Verificando a regra 'program -> declaracoes'")
+        self.declaracoes()
+
+    def declaracoes(self):
+        """Regra: declaracoes -> tipo ID declaracoes | vazio"""
+        if self.current_token['type'] in ['INT', 'FLOAT']:  # Verifica se o token é um tipo de dado
+            print("Verificando a regra 'declaracoes -> tipo ID declaracoes'")
+            self.tipo()
+            self.match('ID')
+            self.declaracoes()  # Recursão para múltiplas declarações
+        else:
+            print("Regra 'declaracoes -> vazio' aplicada.")
+
+    def tipo(self):
+        """Regra: tipo -> 'INT' | 'FLOAT'"""
+        print(f"Verificando a regra 'tipo -> {self.current_token['type']}'")
+        if self.current_token['type'] == 'INT':
+            self.match('INT')
+        elif self.current_token['type'] == 'FLOAT':
+            self.match('FLOAT')
+        else:
+            raise Exception(f"Erro de sintaxe: tipo esperado, encontrado {self.current_token['type']}")
+
+# Exemplo de uso do parser
+tokens = [
+    {'type': 'INT', 'value': 'int'},
+    {'type': 'ID', 'value': 'x'},
+    {'type': 'FLOAT', 'value': 'float'},
+    {'type': 'ID', 'value': 'y'},
+    {'type': 'EOF', 'value': ''}
+]
+
+parser = RecursiveDescentParser(tokens)
+parser.parse()
+print("Parsing concluído com sucesso.")
+
+
